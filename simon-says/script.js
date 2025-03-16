@@ -2,6 +2,7 @@ const startBtn = document.createElement("button");
 const levelEasyBtn = document.createElement("button");
 const levelMiddleBtn = document.createElement("button");
 const levelHardBtn = document.createElement("button");
+const levelComplexBtn = document.createElement("button");
 const chooseLevelText = document.createElement("p");
 const titleGame = document.createElement("h1");
 const keyboardContainer = document.createElement("div");
@@ -87,6 +88,56 @@ const levelsKeyboard = {
     "y",
     "z",
   ],
+  complex: [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    ".",
+    ",",
+    "/",
+    "+",
+    "-",
+    "!",
+    "@",
+    "$",
+    "%",
+    ")",
+    "(",
+    "*"
+  ],
 };
 let letters = levelsKeyboard[selectedLevel];
 let isDisplayingSequence = false;
@@ -96,6 +147,7 @@ startBtn.textContent = "Start";
 levelEasyBtn.textContent = "Easy level";
 levelMiddleBtn.textContent = "Middle level";
 levelHardBtn.textContent = "Hard level";
+levelComplexBtn.textContent = "Complex level";
 chooseLevelText.textContent = "Choose a level to play";
 titleGame.textContent = "Simon game";
 roundText.textContent = `Round ${round}/5`;
@@ -104,6 +156,7 @@ startBtn.classList.add("upper-block-menu__btn-start", "game__button");
 levelEasyBtn.classList.add("game__button", "level__button");
 levelMiddleBtn.classList.add("game__button", "level__button");
 levelHardBtn.classList.add("game__button", "level__button");
+levelComplexBtn.classList.add("game__button", "level__button");
 levelsContainer.classList.add("levels-block");
 keyboardContainer.classList.add("keyboard-block");
 titleGame.classList.add("game__text-title");
@@ -124,6 +177,7 @@ function InitialGameScreen() {
   levelsContainer.appendChild(levelEasyBtn);
   levelsContainer.appendChild(levelMiddleBtn);
   levelsContainer.appendChild(levelHardBtn);
+  levelsContainer.appendChild(levelComplexBtn);
   upperBlockMenu.appendChild(levelsContainer);
   upperBlockMenu.appendChild(startBtn);
   startBtn.appendChild(span);
@@ -131,7 +185,7 @@ function InitialGameScreen() {
   container.append(upperBlockMenu);
   container.append(middleBlockMenu);
   upperBlockMenu.style.flexDirection = "column";
-  let levelBtns = [levelEasyBtn, levelMiddleBtn, levelHardBtn];
+  let levelBtns = [levelEasyBtn, levelMiddleBtn, levelHardBtn, levelsContainer];
   levelBtns.forEach((el) => {
     if (el.textContent.split(" ")[0].toLowerCase() === selectedLevel) {
       el.classList.add("levels-block__active-btn");
@@ -145,7 +199,13 @@ function createKeyboard(level) {
   container.appendChild(keyboardContainer);
   keyboardContainer.innerHTML = "";
   levelName.textContent = `Level: ${level}`;
-  letters = levelsKeyboard[level];
+  if (level !== 'complex') {
+    letters = levelsKeyboard[level];
+  }
+  else {
+    level = 'complex';  
+    letters = mixElements();
+  }
   letters.forEach((el) => {
     const letter = document.createElement("button");
     letter.classList.add("keyboard-block__letter");
@@ -162,6 +222,7 @@ function removeClass() {
   levelEasyBtn.classList.remove("levels-block__active-btn");
   levelMiddleBtn.classList.remove("levels-block__active-btn");
   levelHardBtn.classList.remove("levels-block__active-btn");
+  levelComplexBtn.classList.remove("levels-block__active-btn");
 }
 
 function layoutGame() {
@@ -238,6 +299,10 @@ async function showElements(randomExp) {
     makeButtonsAvailable();
     newGameBtn.removeAttribute("disabled");
     repeatSequence.removeAttribute("disabled");
+    if (selectedLevel == 'complex') {
+      createKeyboard("complex");
+      makeButtonsAvailable();
+    }
   }
 
   window.addEventListener("keydown", handleKeyPress);
@@ -263,6 +328,15 @@ function makeButtonsInaccessible() {
   letterButtons.forEach((button) => {
     button.setAttribute("disabled", "");
   });
+}
+
+function mixElements() {
+  const arrEl = [...levelsKeyboard.complex];
+  for (let i = arrEl.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [arrEl[i], arrEl[j]] = [arrEl[j], arrEl[i]];
+  }
+  return arrEl;
 }
 
 function makeButtonsAvailable() {
@@ -372,6 +446,12 @@ levelHardBtn.addEventListener("click", () => {
   selectedLevel = "hard";
   updateLevel();
   levelHardBtn.classList.add("levels-block__active-btn");
+});
+levelComplexBtn.addEventListener("click", () => {
+  removeClass();
+  selectedLevel = "complex";
+  updateLevel();
+  levelComplexBtn.classList.add("levels-block__active-btn");
 });
 createKeyboard(selectedLevel);
 
