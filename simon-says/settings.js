@@ -61,6 +61,7 @@ export function createSettingsModal(body, audio) {
 
   const colorInput = document.createElement("input");
   colorInput.type = "color"; 
+  colorInput.value = "#dd92d5";
   modalContent.appendChild(colorInput);
   colorInput.addEventListener("input", (event) => {
     const selectedColor = event.target.value;
