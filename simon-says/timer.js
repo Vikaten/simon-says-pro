@@ -1,23 +1,35 @@
-export function createTimer() {
-    let countdown;
-    const timer = document.createElement("div");
+let countdown = null;
+const timer =
+  document.getElementById("game__timer") || document.createElement("div");
+
+export function createTimer(onTimeUp) {
+  let timeLeft = 50;
+  
+
+  if (!timer.id) {
+    timer.id = "game__timer";
     timer.classList.add("game__timer");
-    const timerDisplay = document.getElementById("game__timer");
+    document.body.append(timer);
+  }
 
-    function startCountdown() {
-    let timeLeft = 30;
+  stopTimer();
 
-    clearInterval(countdown);
-
-    countdown = setInterval(() => {
-        if (timeLeft <= 0) {
-        clearInterval(countdown);
-        timerDisplay.textContent = "Время вышло!";
-        return;
-        }
-
-        timerDisplay.textContent = timeLeft;
-        timeLeft--;
-    }, 1000);
+  countdown = setInterval(() => {
+    if (timeLeft <= 0) {
+      clearInterval(countdown);
+      countdown = null;
+      timer.textContent = "";
+      if (onTimeUp) onTimeUp();
+      return;
     }
+    timer.textContent = timeLeft;
+    timeLeft--;
+  }, 1000);
+}
+
+export function stopTimer() {
+  if (countdown) {
+    clearInterval(countdown);
+    countdown = null;
+  }
 }

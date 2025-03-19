@@ -1,3 +1,6 @@
+import {createSettingsModal } from './settings.js'
+import { createTimer, stopTimer } from "./timer.js";
+
 const startBtn = document.createElement("button");
 const levelEasyBtn = document.createElement("button");
 const levelMiddleBtn = document.createElement("button");
@@ -15,11 +18,15 @@ const roundText = document.createElement("p");
 const input = document.createElement("input");
 const newGameBtn = document.createElement("button");
 const repeatSequence = document.createElement("button");
+const settingsButton = document.createElement("img");
 const span = document.createElement("span");
+const audio = document.querySelector(".background-music");
+const timerDisplay = document.getElementById("game__timer");
 input.readOnly = true;
 let selectedLevel = "easy";
 let round = 1;
 let isRepetitive = false;
+let currentTimer = null;
 const levelsKeyboard = {
   easy: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
   middle: [
@@ -151,6 +158,10 @@ levelComplexBtn.textContent = "Complex level";
 chooseLevelText.textContent = "Choose a level to play";
 titleGame.textContent = "Simon game";
 roundText.textContent = `Round ${round}/5`;
+settingsButton.src = "assets/settings-icon.png";
+settingsButton.alt = "Настройки";
+settingsButton.style.width = "50px";
+settingsButton.style.height = "50px";
 
 startBtn.classList.add("upper-block-menu__btn-start", "game__button");
 levelEasyBtn.classList.add("game__button", "level__button");
@@ -167,6 +178,7 @@ middleBlockMenu.classList.add("middle-block-menu");
 input.classList.add("middle-block-menu__input");
 repeatSequence.classList.add("game__button");
 span.classList.add("flare");
+settingsButton.classList.add("game__settings-button");
 
 function InitialGameScreen() {
   container.innerHTML = "";
@@ -184,6 +196,7 @@ function InitialGameScreen() {
   document.body.appendChild(container);
   container.append(upperBlockMenu);
   container.append(middleBlockMenu);
+  upperBlockMenu.appendChild(settingsButton);
   upperBlockMenu.style.flexDirection = "column";
   let levelBtns = [levelEasyBtn, levelMiddleBtn, levelHardBtn, levelsContainer];
   levelBtns.forEach((el) => {
@@ -265,6 +278,19 @@ function playGame() {
   createKeyboard(selectedLevel);
   showElements(randomExp);
   clickProcessing();
+  startNewTimer();
+}
+
+function startNewTimer() {
+  if (currentTimer) {
+    clearInterval(currentTimer);
+    timerDisplay.innerHTML = "";
+  }
+
+  currentTimer = createTimer(() => {
+    createModal("Time's up. You've lost");
+    clearGame();
+  });
 }
 
 async function showElements(randomExp) {
@@ -375,16 +401,21 @@ function handleNextRound() {
       randomExp = generateRandomExp(round * 2);
       showElements(randomExp);
       clickProcessing();
+      startNewTimer();
     }
   }
 }
 
 function throwingErrors() {
+  const timerDisplay = document.getElementById("game__timer");
+  if (!timerDisplay) return;
   const inputValueArr = input.value.split("");
   const randomExpArr = randomExp.split("");
   for (let i = 0; i < inputValueArr.length; i++) {
     if (inputValueArr[i].toLowerCase() !== randomExpArr[i] && countAttempt === 0) {
       createModal("Game over :(");
+      stopTimer();
+      timerDisplay.innerHTML = "";
       window.removeEventListener("keydown", handleKeyPress);
       makeButtonsInaccessible();
       input.value = "";
@@ -408,17 +439,21 @@ function throwingErrors() {
 
 function checkMatches() {
   repeatSequence.textContent = "Repeat sequence";
+  const timerDisplay = document.getElementById("game__timer");
   const inputValueArr = input.value.split("");
   const randomExpArr = randomExp.split("");
   if (inputValueArr.join("") === randomExpArr.join("")) {
     if (round === 5) {
+      stopTimer();
       createModal("You win!");
       clearGame();
+      timerDisplay.innerHTML = "";
     } else {
       window.removeEventListener("keydown", handleKeyPress);
 
       repeatSequence.textContent = "Next";
       createModal('You guessed right. Click on the "next" button');
+      stopTimer()
       makeButtonsInaccessible();
       repeatSequence.removeEventListener("click", handleNextRound);
       showRepeatSequence();
@@ -461,7 +496,12 @@ startBtn.addEventListener("click", () => {
 
 function clearGame() {
   container.style.justifyContent = "center";
-  container.style.gap = "50px";
+  if (window.innerWidth < 500) {
+    container.style.gap = "20px";
+  }
+  else {
+    container.style.gap = "50px";
+  }
   countAttempt = 1;
   round = 1;
   randomExp = generateRandomExp(2);
@@ -476,9 +516,12 @@ function clearGame() {
 
 function newGame() {
   newGameBtn.addEventListener("click", () => {
+    const timerDisplay = document.getElementById("game__timer");
     isDisplayingSequence = false;
     makeButtonsInaccessible();
     clearGame();
+    stopTimer();
+    timerDisplay.innerHTML = "";
   });
 }
 
@@ -524,9 +567,7 @@ window.addEventListener("resize", () => {
   if (window.innerWidth < 800) {
     isDisplayingSequence = true;
     upperBlockMenu.style.flexDirection = "column";
-  } else if (isDisplayingSequence && window.innerWidth >= 800) {
-    upperBlockMenu.style.flexDirection = "row";
-  }
+  } 
 });
 
 function createModal(message) {
@@ -535,7 +576,7 @@ function createModal(message) {
   const modalMessage = document.createElement("p");
   const closeButton = document.createElement("button");
 
-  modalOverlay.classList.add("modal-overlay");
+  modalOverlay.classList.add("modal-overlay", "common-modal");
   modal.classList.add("modal-overlay__modal");
   modalMessage.classList.add("modal__modal-message");
   closeButton.classList.add("modal__close-button", "game__button");
@@ -553,3 +594,26 @@ function createModal(message) {
   modalOverlay.appendChild(modal);
   document.body.appendChild(modalOverlay);
 }
+
+document.addEventListener(
+  "click",
+  () => {
+    if (audio.paused) {
+      audio
+        .play()
+        .catch((error) =>
+          console.error("Ошибка при воспроизведении аудио:", error)
+        );
+    }
+  },
+  { once: true }
+);
+
+document.addEventListener("DOMContentLoaded", () => {
+  createSettingsModal(document.body, audio);
+  const settingsModal = document.getElementById("settings-modal");
+  settingsButton.addEventListener("click", () => {
+    settingsModal.style.display = "flex";
+  });
+});
+
